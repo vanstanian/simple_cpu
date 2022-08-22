@@ -1,0 +1,12 @@
+add r0 1 1
+str r0 9
+add r0 r0 1
+str r0 10
+add r0 r0 r0
+sub r1 2 1
+mul r2 4 4
+div r3 14 12
+str r3 11
+str r2 12
+str r1 13
+str r0 14
