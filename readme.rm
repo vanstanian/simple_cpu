@@ -2,15 +2,16 @@ Virtual interpreter:
 -Opens a file
 -Reads line by line
 -Ops:
---add val1 val2
---sub val1 val2
---mul val1 val2
---div val1 val2
---cmp val1 val2 -- val1 == val2
---jmp dir       -- if cmp  == true
---ld  dir  to
---str dir  to
+--add rXX rXX/numVal rYY/numVal2
+--sub rXX rXX/numVal rYY/numVal2
+--mul rXX rXX/numVal rYY/numVal2
+--div rXX rXX/numVal rYY/numVal2
+--mov rFrom(rXX) rTo(rYY)
+--cmp rXX val -- rXX == val
+--jmp rXX dirVal       -- if rXX == 1  => jump to dirVal
+--ld  rXX at
+--str rXX to
 
 Having:
 -12 mem registers cpu
--1 stack
+-48 mem allocs main mem
