@@ -2,8 +2,8 @@ mod reader;
 mod cpu_state;
 
 use std::env;
-use reader::Reader;
-use cpu_state::CpuState;
+use reader::{Read, Reader};
+use cpu_state::{Cpu, CpuState};
 
 fn main() {
 

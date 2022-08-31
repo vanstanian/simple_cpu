@@ -1,8 +1,8 @@
 mod operation;
 
 use operation::Operation;
+use crate::cpu_state::operation::OperationLogic;
 use std::io::stdin;
-
 
 #[derive(Clone)]
 pub struct CpuState {
@@ -12,20 +12,28 @@ pub struct CpuState {
     program_counter: usize
 }
 
-impl CpuState {
-    pub fn new(program: Vec<String>) -> CpuState {
-        let cpu_memory: [i32; 12] = [0,0,0,0,0,0,0,0,0,0,0,0];
-        let main_memory: [i32; 48] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-        let program_counter: usize = 0;
-        CpuState {
-            cpu_memory,
-            main_memory,
-            program: Self::gen_program_vec(&program),
-            program_counter
-        }
-    }
+pub trait Cpu {
+    fn new(program: Vec<String>) -> Self;
+    fn alloc(self, dir: usize, val: i32) -> Self;
+    fn move_to_main_memory(self, reg: usize, to: usize) -> Self;
+    fn move_to_cpu_memory(self, dir: usize, at: usize) -> Self;
+    fn move_on_cpu_memory(self, from: usize, to: usize) -> Self;
+    fn show_cpu_memory(self);
+    fn show_main_memory(self);
+    fn show_program(self);
+    fn execute_program(self, batch_or_debug: String) -> Self;
+    fn next_program_counter (self) -> Self;
+    fn jump_program_counter (self, new_program_counter: usize) -> Self;
+}
 
-    fn new_interal(
+mod private {
+
+    use crate::CpuState;
+    use crate::cpu_state::Operation;
+
+    use super::operation::OperationLogic;
+
+    pub fn new_interal(
         cpu_memory: [i32; 12],
         main_memory: [i32; 48],
         program: Vec<Operation>,
@@ -39,35 +47,63 @@ impl CpuState {
         }
     }
 
-    pub fn alloc(mut self, dir: usize, val: i32) -> CpuState{
-        self.cpu_memory[dir] = val;
+    pub fn gen_program_vec(reading: &Vec<String>) -> Vec<Operation>{
+        let mut vector = Vec::<Operation>::new();
+        for i in reading {
+            let operation: Operation = Operation::parse_op(i.to_string());
+            vector.push(operation);
+        };
+        vector
+    }
+
+}
+
+impl Cpu for CpuState {
+    fn new(program: Vec<String>) -> CpuState {
+        let cpu_memory: [i32; 12] = [0,0,0,0,0,0,0,0,0,0,0,0];
+        let main_memory: [i32; 48] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        let program_counter: usize = 0;
+        CpuState {
+            cpu_memory,
+            main_memory,
+            program: private::gen_program_vec(&program),
+            program_counter
+        }
+    }
+
+    fn alloc(self, dir: usize, val: i32) -> CpuState{
+        let mut cpu = self.clone();
+        cpu.cpu_memory[dir] = val;
+        cpu
+    }
+
+    fn move_to_main_memory(self, reg: usize, to: usize) -> CpuState {
+        let mut cpu = self.clone();
+        cpu.main_memory[to] = cpu.clone().cpu_memory[reg];
+        cpu
+    }
+
+    fn move_to_cpu_memory(self, dir: usize, at: usize) -> CpuState {
+        let mut cpu = self.clone();
+        cpu.cpu_memory[at] = cpu.clone().main_memory[dir];
         self
     }
 
-    pub fn move_to_main_memory(mut self, reg: usize, to: usize) -> CpuState {
-        self.main_memory[to] = self.clone().cpu_memory[reg];
+    fn move_on_cpu_memory(self, from: usize, to: usize) -> CpuState {
+        let mut cpu = self.clone();
+        cpu.cpu_memory[to] = cpu.clone().cpu_memory[from];
         self
     }
 
-    pub fn move_to_cpu_memory(mut self, dir: usize, at: usize) -> CpuState {
-        self.cpu_memory[at] = self.clone().main_memory[dir];
-        self
-    }
-
-    pub fn move_on_cpu_memory(mut self, from: usize, to: usize) -> CpuState {
-        self.cpu_memory[to] = self.clone().cpu_memory[from];
-        self
-    }
-
-    pub fn show_cpu_memory(self){
+    fn show_cpu_memory(self){
         println!("Cpu Memory: {:?}", self.cpu_memory);
     }
 
-    pub fn show_main_memory(self){
+    fn show_main_memory(self){
         println!("Main Memory: {:?}", self.main_memory);
     }
 
-    pub fn show_program(self){
+    fn show_program(self){
         let mut ins_num = 0;
         for i in self.program {
             println!("{}: {}", ins_num, i.to_string());
@@ -75,7 +111,16 @@ impl CpuState {
         }
     }
 
-    pub fn execute_program(self, batch_or_debug: String) -> CpuState {
+    fn next_program_counter (self) -> CpuState {
+        let cpu_program_counter = self.clone().program_counter + 1;
+        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, cpu_program_counter)
+    }
+
+    fn jump_program_counter (self, new_program_counter: usize) -> CpuState {
+        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, new_program_counter)
+    }
+
+    fn execute_program(self, batch_or_debug: String) -> CpuState {
         let mut cpu = self.clone();
         
         while cpu.clone().program_counter.clone() < cpu.clone().program.len() {
@@ -113,24 +158,6 @@ impl CpuState {
 
         };
         cpu
-    }
-
-    pub fn next_program_counter (self) -> CpuState {
-        let cpu_program_counter = self.clone().program_counter + 1;
-        CpuState::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, cpu_program_counter)
-    }
-
-    pub fn jump_program_counter (self, new_program_counter: usize) -> CpuState {
-        CpuState::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, new_program_counter)
-    }
-
-    fn gen_program_vec(reading: &Vec<String>) -> Vec<Operation>{
-        let mut vector = Vec::<Operation>::new();
-        for i in reading {
-            let operation: Operation = Operation::parse_op(i.to_string());
-            vector.push(operation);
-        };
-        vector
     }
 
 }
