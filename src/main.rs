@@ -27,6 +27,6 @@ fn main() {
 
     cpu.clone().show_cpu_memory();
 
-    cpu.clone().show_main_memory();
+    cpu.show_main_memory();
 
 }

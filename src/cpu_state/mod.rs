@@ -72,26 +72,26 @@ impl Cpu for CpuState {
     }
 
     fn alloc(self, dir: usize, val: i32) -> CpuState{
-        let mut cpu = self.clone();
+        let mut cpu = self;
         cpu.cpu_memory[dir] = val;
         cpu
     }
 
     fn move_to_main_memory(self, reg: usize, to: usize) -> CpuState {
-        let mut cpu = self.clone();
-        cpu.main_memory[to] = cpu.clone().cpu_memory[reg];
+        let mut cpu = self;
+        cpu.main_memory[to] = cpu.cpu_memory[reg];
         cpu
     }
 
     fn move_to_cpu_memory(self, dir: usize, at: usize) -> CpuState {
-        let mut cpu = self.clone();
-        cpu.cpu_memory[at] = cpu.clone().main_memory[dir];
+        let mut cpu = self;
+        cpu.cpu_memory[at] = cpu.main_memory[dir];
         cpu
     }
 
     fn move_on_cpu_memory(self, from: usize, to: usize) -> CpuState {
-        let mut cpu = self.clone();
-        cpu.cpu_memory[to] = cpu.clone().cpu_memory[from];
+        let mut cpu = self;
+        cpu.cpu_memory[to] = cpu.cpu_memory[from];
         cpu
     }
 
@@ -104,31 +104,29 @@ impl Cpu for CpuState {
     }
 
     fn show_program(self){
-        let mut ins_num = 0;
-        for i in self.program {
+        for (ins_num, i) in self.program.into_iter().enumerate() {
             println!("{}: {}", ins_num, i.to_string());
-            ins_num = ins_num + 1;
         }
     }
 
     fn next_program_counter (self) -> CpuState {
-        let cpu_program_counter = self.clone().program_counter + 1;
-        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, cpu_program_counter)
+        let cpu_program_counter = self.program_counter + 1;
+        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.program, cpu_program_counter)
     }
 
     fn jump_program_counter (self, new_program_counter: usize) -> CpuState {
-        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.clone().program, new_program_counter)
+        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.program, new_program_counter)
     }
 
     fn execute_program(self, batch_or_debug: String) -> CpuState {
-        let mut cpu = self.clone();
+        let mut cpu = self;
         
-        while cpu.clone().program_counter.clone() < cpu.clone().program.len() {
+        while cpu.program_counter < cpu.clone().program.len() {
             
             let instruction = 
                 cpu.clone()
                 .program.clone()
-                .get(cpu.clone().program_counter.clone()).unwrap().to_owned();
+                .get(cpu.program_counter).unwrap().to_owned();
             cpu = instruction.clone().compute(cpu.clone());
             
             match instruction.clone() {

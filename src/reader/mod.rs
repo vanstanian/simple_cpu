@@ -3,14 +3,14 @@ pub struct Reader{
 }
 
 pub trait Read {
-    fn new(file_name: String) -> Reader;
+    fn new(file_name: String) -> Self;
     fn read_file_name(args: Vec<String>) -> String;
     fn read_file_line_splitted(self) -> Vec<String>;
 }
 
 mod private {
     use std::fs::File;
-    use std::io::{BufRead};
+    use std::io::BufRead;
     use std::io::Result;
     use std::io::Lines;
     use std::io::BufReader;
@@ -24,9 +24,9 @@ mod private {
 
 impl Read for Reader {
 
-    fn new(file_name: String) -> Reader{
+    fn new(file_name: String) -> Self{
         Reader {
-            file_name: file_name,
+            file_name,
         }
     }
 

@@ -25,21 +25,21 @@ mod private {
     use crate::CpuState;    
 
     pub fn get_particles(line: &String) -> Vec<&str> {
-        let splitted = line.split(" ");
+        let splitted = line.split(' ');
         let particles: Vec<&str> = splitted.collect();
 
         if particles.len() != 4 
-            && particles.get(0).unwrap().to_string() == "add"
-            && particles.get(0).unwrap().to_string() == "sub"
-            && particles.get(0).unwrap().to_string() == "mul"
-            && particles.get(0).unwrap().to_string() == "div" {
+            && *particles.get(0).unwrap() == "add"
+            && *particles.get(0).unwrap() == "sub"
+            && *particles.get(0).unwrap() == "mul"
+            && *particles.get(0).unwrap() == "div" {
             panic!("Line {} is not of 4 elements!", line);
         } else if particles.len() != 3 
-            && particles.get(0).unwrap().to_string() == "ld"
-            && particles.get(0).unwrap().to_string() == "str"
-            && particles.get(0).unwrap().to_string() == "cmp" 
-            && particles.get(0).unwrap().to_string() == "jmp"
-            && particles.get(0).unwrap().to_string() == "mov"
+            && *particles.get(0).unwrap() == "ld"
+            && *particles.get(0).unwrap() == "str"
+            && *particles.get(0).unwrap() == "cmp" 
+            && *particles.get(0).unwrap() == "jmp"
+            && *particles.get(0).unwrap() == "mov"
         {
             panic!("Line {} is not of 3 elements!", line);
         };
@@ -53,28 +53,28 @@ mod private {
             panic!(
                 "Bad cpu memory dir value: {} should be between [1..15] at instruction {}", 
                 dir, 
-                cpu_state.clone().program_counter + 1
+                cpu_state.program_counter + 1
             );
         }
     }
 
     pub fn get_val(op: String, cpu_state: &CpuState) -> i32 {
-        if op.clone().as_bytes()[0]=="r".as_bytes()[0] {
+        if op.as_bytes()[0]=="r".as_bytes()[0] {
             let reg_val = check_between_cpu_mem_refs(op[1..].parse::<usize>().unwrap(), cpu_state);
-            cpu_state.clone().cpu_memory[reg_val]
+            cpu_state.cpu_memory[reg_val]
         } else {
-            op.clone().parse::<i32>().unwrap()
+            op.parse::<i32>().unwrap()
         }
     }
 
     pub fn get_mem_val(op: String, cpu_state: &CpuState) -> usize {
-        if op.clone().as_bytes()[0]=="r".as_bytes()[0] {
+        if op.as_bytes()[0]=="r".as_bytes()[0] {
             op[1..].parse::<usize>().unwrap()
         } else  {
             panic!(
                 "Bad cpu memory value format: {}, should be rXX at instruction {}", 
                 op,
-                cpu_state.clone().program_counter + 1
+                cpu_state.program_counter + 1
             );
         }
     }
@@ -104,10 +104,10 @@ impl OperationLogic for Operation {
             };
 
         match particles.get(0).unwrap().to_string().as_str() {
-            "add" => Operation::Add {op1: op1, op2: op2, op3: op3},
-            "sub" => Operation::Sub {op1: op1, op2: op2, op3: op3},
-            "mul" => Operation::Mul {op1: op1, op2: op2, op3: op3},
-            "div" => Operation::Div {op1: op1, op2: op2, op3: op3},
+            "add" => Operation::Add {op1, op2, op3},
+            "sub" => Operation::Sub {op1, op2, op3},
+            "mul" => Operation::Mul {op1, op2, op3},
+            "div" => Operation::Div {op1, op2, op3},
             "ld"  => Operation::Ld  {dir: op1, at:  op2},
             "str" => Operation::Str {reg: op1, to:  op2},
             "mov" => Operation::Mov { from_reg: op1, to_reg: op2 },
@@ -174,8 +174,8 @@ impl OperationLogic for Operation {
                 ),
             Operation::Cmp {this, eq_this} => {
                 let cmp = 
-                    if cpu_state.clone().cpu_memory[private::get_mem_val(this.clone(), &cpu_state)] 
-                        != eq_this.clone().parse::<i32>().unwrap() 
+                    if cpu_state.cpu_memory[private::get_mem_val(this.clone(), &cpu_state)] 
+                        != eq_this.parse::<i32>().unwrap() 
                     { 0 } else { 1 };
                 cpu_state.clone().alloc(
                     private::get_mem_val(this, &cpu_state),
@@ -184,10 +184,10 @@ impl OperationLogic for Operation {
             },
             Operation::Jmp {reg_cond, pc_to_jump}                   => 
                 {
-                    if cpu_state.clone().cpu_memory[private::get_mem_val(reg_cond, &cpu_state)] == 0 {
-                        cpu_state.clone().jump_program_counter(pc_to_jump.parse::<usize>().unwrap())
+                    if cpu_state.cpu_memory[private::get_mem_val(reg_cond, &cpu_state)] == 0 {
+                        cpu_state.jump_program_counter(pc_to_jump.parse::<usize>().unwrap())
                     } else {
-                        cpu_state.clone().next_program_counter()
+                        cpu_state.next_program_counter()
                     }
                 }
         }
