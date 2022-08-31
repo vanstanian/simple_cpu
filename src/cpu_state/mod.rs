@@ -4,16 +4,6 @@ use operation::Operation;
 use crate::cpu_state::operation::OperationLogic;
 use std::io::stdin;
 
-#[macro_export]
-macro_rules! prompt {
-    ($val:expr) => {
-        stdin()
-        .read_line(&mut $val)
-        .ok()
-        .expect("Failed to read line");
-    };
-}
-
 #[derive(Clone)]
 pub struct CpuState {
     cpu_memory: [i32; 12],
@@ -159,7 +149,7 @@ impl Cpu for CpuState {
                 let mut input_str = String::new();
                 cpu.clone().show_program();
                 
-                prompt!(input_str);
+                guessing_name::prompt!(input_str);
 
             };
 
