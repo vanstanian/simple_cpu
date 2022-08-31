@@ -1,7 +1,7 @@
 mod operation;
 
-use operation::Operation;
 use crate::cpu_state::operation::OperationLogic;
+use operation::Operation;
 use std::io::stdin;
 
 #[derive(Clone)]
@@ -9,7 +9,7 @@ pub struct CpuState {
     cpu_memory: [i32; 12],
     main_memory: [i32; 48],
     program: Vec<Operation>,
-    program_counter: usize
+    program_counter: usize,
 }
 
 pub trait Cpu {
@@ -22,14 +22,14 @@ pub trait Cpu {
     fn show_main_memory(self);
     fn show_program(self);
     fn execute_program(self, batch_or_debug: String) -> Self;
-    fn next_program_counter (self) -> Self;
-    fn jump_program_counter (self, new_program_counter: usize) -> Self;
+    fn next_program_counter(self) -> Self;
+    fn jump_program_counter(self, new_program_counter: usize) -> Self;
 }
 
 mod private {
 
-    use crate::CpuState;
     use crate::cpu_state::Operation;
+    use crate::CpuState;
 
     use super::operation::OperationLogic;
 
@@ -37,41 +37,43 @@ mod private {
         cpu_memory: [i32; 12],
         main_memory: [i32; 48],
         program: Vec<Operation>,
-        program_counter: usize) 
-    -> CpuState {
+        program_counter: usize,
+    ) -> CpuState {
         CpuState {
             cpu_memory,
             main_memory,
             program,
-            program_counter
+            program_counter,
         }
     }
 
-    pub fn gen_program_vec(reading: &Vec<String>) -> Vec<Operation>{
+    pub fn gen_program_vec(reading: &Vec<String>) -> Vec<Operation> {
         let mut vector = Vec::<Operation>::new();
         for i in reading {
             let operation: Operation = Operation::parse_op(i.to_string());
             vector.push(operation);
-        };
+        }
         vector
     }
-
 }
 
 impl Cpu for CpuState {
     fn new(program: Vec<String>) -> CpuState {
-        let cpu_memory: [i32; 12] = [0,0,0,0,0,0,0,0,0,0,0,0];
-        let main_memory: [i32; 48] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        let cpu_memory: [i32; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let main_memory: [i32; 48] = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
         let program_counter: usize = 0;
         CpuState {
             cpu_memory,
             main_memory,
             program: private::gen_program_vec(&program),
-            program_counter
+            program_counter,
         }
     }
 
-    fn alloc(self, dir: usize, val: i32) -> CpuState{
+    fn alloc(self, dir: usize, val: i32) -> CpuState {
         let mut cpu = self;
         cpu.cpu_memory[dir] = val;
         cpu
@@ -95,64 +97,77 @@ impl Cpu for CpuState {
         cpu
     }
 
-    fn show_cpu_memory(self){
+    fn show_cpu_memory(self) {
         println!("Cpu Memory: {:?}", self.cpu_memory);
     }
 
-    fn show_main_memory(self){
+    fn show_main_memory(self) {
         println!("Main Memory: {:?}", self.main_memory);
     }
 
-    fn show_program(self){
+    fn show_program(self) {
         for (ins_num, i) in self.program.into_iter().enumerate() {
             println!("{}: {}", ins_num, i.to_string());
         }
     }
 
-    fn next_program_counter (self) -> CpuState {
+    fn next_program_counter(self) -> CpuState {
         let cpu_program_counter = self.program_counter + 1;
-        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.program, cpu_program_counter)
+        private::new_interal(
+            self.clone().cpu_memory,
+            self.clone().main_memory,
+            self.program,
+            cpu_program_counter,
+        )
     }
 
-    fn jump_program_counter (self, new_program_counter: usize) -> CpuState {
-        private::new_interal(self.clone().cpu_memory, self.clone().main_memory, self.program, new_program_counter)
+    fn jump_program_counter(self, new_program_counter: usize) -> CpuState {
+        private::new_interal(
+            self.clone().cpu_memory,
+            self.clone().main_memory,
+            self.program,
+            new_program_counter,
+        )
     }
 
     fn execute_program(self, batch_or_debug: String) -> CpuState {
         let mut cpu = self;
-        
+
         while cpu.program_counter < cpu.clone().program.len() {
-            
-            let instruction = 
-                cpu.clone()
-                .program.clone()
-                .get(cpu.program_counter).unwrap().to_owned();
+            let instruction = cpu
+                .clone()
+                .program
+                .clone()
+                .get(cpu.program_counter)
+                .unwrap()
+                .to_owned();
             cpu = instruction.clone().compute(cpu.clone());
-            
+
             match instruction.clone() {
-                Operation::Jmp { reg_cond: _, pc_to_jump: _} => {},
-                _ => {cpu = Self::next_program_counter(cpu.clone());}
+                Operation::Jmp {
+                    reg_cond: _,
+                    pc_to_jump: _,
+                } => {}
+                _ => {
+                    cpu = Self::next_program_counter(cpu.clone());
+                }
             };
 
             if batch_or_debug == "debug" {
-            
                 instruction.clone().print_ln();
                 cpu.clone().show_cpu_memory();
                 cpu.clone().show_main_memory();
-                if cpu.clone().program_counter < cpu.clone().program.clone().len(){
+                if cpu.clone().program_counter < cpu.clone().program.clone().len() {
                     println!("Next program counter: {}", cpu.clone().program_counter);
                 } else {
                     println!("Ended!!");
                 }
                 let mut input_str = String::new();
                 cpu.clone().show_program();
-                
+
                 guessing_name::prompt!(input_str);
-
             };
-
-        };
+        }
         cpu
     }
-
 }
