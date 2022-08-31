@@ -4,6 +4,16 @@ use operation::Operation;
 use crate::cpu_state::operation::OperationLogic;
 use std::io::stdin;
 
+#[macro_export]
+macro_rules! prompt {
+    ($val:expr) => {
+        stdin()
+        .read_line(&mut $val)
+        .ok()
+        .expect("Failed to read line");
+    };
+}
+
 #[derive(Clone)]
 pub struct CpuState {
     cpu_memory: [i32; 12],
@@ -86,13 +96,13 @@ impl Cpu for CpuState {
     fn move_to_cpu_memory(self, dir: usize, at: usize) -> CpuState {
         let mut cpu = self.clone();
         cpu.cpu_memory[at] = cpu.clone().main_memory[dir];
-        self
+        cpu
     }
 
     fn move_on_cpu_memory(self, from: usize, to: usize) -> CpuState {
         let mut cpu = self.clone();
         cpu.cpu_memory[to] = cpu.clone().cpu_memory[from];
-        self
+        cpu
     }
 
     fn show_cpu_memory(self){
@@ -149,10 +159,7 @@ impl Cpu for CpuState {
                 let mut input_str = String::new();
                 cpu.clone().show_program();
                 
-                stdin()
-                .read_line(&mut input_str)
-                .ok()
-                .expect("Failed to read line");
+                prompt!(input_str);
 
             };
 
