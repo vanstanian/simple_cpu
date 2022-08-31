@@ -45,7 +45,7 @@ pub enum Operation {
     },
 }
 
-pub trait OperationLogic {
+pub trait OperLogic {
     fn parse_op(line: String) -> Self;
     fn to_string(self) -> String;
     fn print_ln(self);
@@ -112,24 +112,24 @@ mod private {
     }
 }
 
-impl OperationLogic for Operation {
+impl OperLogic for Operation {
     fn parse_op(line: String) -> Operation {
         let particles: Vec<&str> = private::get_particles(&line);
 
         let op1: String = match particles.get(1) {
-            Some(op) => op.to_string(),
+            Some(op) => (*op).to_string(),
             None => "0".to_string(),
         };
         let op2: String = match particles.get(2) {
-            Some(op) => op.to_string(),
+            Some(op) => (*op).to_string(),
             None => "0".to_string(),
         };
         let op3: String = match particles.get(3) {
-            Some(op) => op.to_string(),
+            Some(op) => (*op).to_string(),
             None => "0".to_string(),
         };
 
-        match particles.get(0).unwrap().to_string().as_str() {
+        match (*particles.get(0).unwrap()).to_string().as_str() {
             "add" => Operation::Add { op1, op2, op3 },
             "sub" => Operation::Sub { op1, op2, op3 },
             "mul" => Operation::Mul { op1, op2, op3 },
@@ -205,11 +205,11 @@ impl OperationLogic for Operation {
             ),
             Operation::Cmp { this, eq_this } => {
                 let cmp = if cpu_state.cpu_memory[private::get_mem_val(this.clone(), &cpu_state)]
-                    != eq_this.parse::<i32>().unwrap()
+                    == eq_this.parse::<i32>().unwrap()
                 {
-                    0
-                } else {
                     1
+                } else {
+                    0
                 };
                 cpu_state
                     .clone()

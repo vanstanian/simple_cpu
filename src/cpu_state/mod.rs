@@ -1,6 +1,6 @@
 mod operation;
 
-use crate::cpu_state::operation::OperationLogic;
+use crate::cpu_state::operation::OperLogic;
 use operation::Operation;
 use std::io::stdin;
 
@@ -31,7 +31,7 @@ mod private {
     use crate::cpu_state::Operation;
     use crate::CpuState;
 
-    use super::operation::OperationLogic;
+    use super::operation::OperLogic;
 
     pub fn new_interal(
         cpu_memory: [i32; 12],
@@ -140,7 +140,7 @@ impl Cpu for CpuState {
                 .clone()
                 .get(cpu.program_counter)
                 .unwrap()
-                .to_owned();
+                .clone();
             cpu = instruction.clone().compute(cpu.clone());
 
             match instruction.clone() {
